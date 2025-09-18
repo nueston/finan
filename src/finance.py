@@ -1,6 +1,8 @@
+
 import yfinance as yf
 import pandas as pd
 import pytz
+from defs.class_stock_value import Ohlc
 
 
 class Interval:
@@ -42,9 +44,9 @@ class FinanceData:
         else:
             return f"{hour:02d}:00"
 
-    def get_hour_value(self, date_str: str, hour_str: str, time_half: bool = False):
+    def get_hour_value(self, date_str: str, hour_str: str, time_half: bool = False) -> 'Ohlc | None':
         """
-        Get all OHLC values (Open, High, Low, Close) for a given date and hour.
+        Get all OHLC values (Open, High, Low, Close) for a given date and hour as a StockValue.
 
         Args:
             date_str (str): Date in 'YYYY-MM-DD' format.
@@ -52,7 +54,7 @@ class FinanceData:
             time_half (bool): If True, round down to nearest half hour.
 
         Returns:
-            dict or None: Dictionary with keys 'Open', 'High', 'Low', 'Close', or None if not found.
+            StockValue or None: StockValue instance with OHLC, or None if not found.
         """
         if self.data is None or self.data.empty:
             return None
@@ -61,15 +63,20 @@ class FinanceData:
         df['hour'] = df.index.strftime('%H:%M')
         hour_interval = self.to_lower_interval(hour_str, time_half=time_half)
         mask = (df['date'] == date_str) & (df['hour'] == hour_interval)
-        print(df)
+        # df mask example:
+        # datetime                   Open       High       Low        Close           Volume  Dividends      Stock Splits        date        hour
+        # 2025-08-01 09:00:00+02:00  83.480003  83.680000  82.699997  83.019997       0        0.0           0.0                 2025-08-01  09:00
+        # ...
+
         row = df[mask]
         if row.empty:
             print("row empty !!")
             return None
-        result = {}
-        for col in ['Open', 'High', 'Low', 'Close']:
-            result[col] = float(row[col].max())
-        return result
+        o = float(row['Open'].max())
+        h = float(row['High'].max())
+        l = float(row['Low'].max())
+        c = float(row['Close'].max())
+        return Ohlc(m_open=o, m_high=h, m_low=l, m_close=c)
 
     def __init__(self, ticker: str, interval: Interval, time_zone: str = 'Europe/Berlin'):
         self.ticker = ticker

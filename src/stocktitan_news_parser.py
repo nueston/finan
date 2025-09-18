@@ -1,23 +1,23 @@
+
 import re
 from bs4 import BeautifulSoup
 from typing import List, Dict
 from remote_html_manager import RemoteHtmlManager
+from defs.class_news import NewsEntry
 
 
-class NewsEntry:
-    def __init__(self, date: str, time: str, company: str, sentiment: int, impact: int):
-        self.date = date
-        self.time = time
-        self.company = company
-        self.sentiment = sentiment
-        self.impact = impact
 
-    def __repr__(self):
-        return f"[{self.date}, {self.time}, {self.company}, {self.sentiment}, {self.impact}]"
+class StockNewsParser:
+    def __init__(self, url: str, date: str):
+        """
+        Initialize the parser by fetching HTML content for a specific date from the given base URL.
 
-
-class StockTitanNewsParser:
-    def __init__(self, html_content: str):
+        Args:
+            url (str): The base URL.
+            date (str): The date string in 'YYYY-MM-DD' format.
+        """
+        fetch_url = f"{url}/news/{date}"
+        html_content = RemoteHtmlManager().fetch_html(fetch_url)
         self.soup = BeautifulSoup(html_content, 'html.parser')
 
     def parse_news_entries(self) -> List[NewsEntry]:
@@ -77,10 +77,11 @@ class StockTitanNewsParser:
             return full_dots
         return 0
 
+# Example usage
 
-url = 'https://www.stocktitan.net/news/2025-08-01/'
-html_content = RemoteHtmlManager().fetch_html(url)
-parser = StockTitanNewsParser(html_content)
+url = 'https://www.stocktitan.net'
+date = '2025-08-01'
+parser = StockNewsParser(url, date)
 news_entries = parser.parse_news_entries()
 for entry in news_entries:
     print(entry)
