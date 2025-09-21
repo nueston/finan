@@ -1,3 +1,19 @@
+def to_24h(time_str: str) -> str:
+    """
+    Convert a time string in AM/PM format to 24-hour format (HH:MM).
+
+    Args:
+        time_str (str): Time string in format 'HH:MM AM' or 'HH:MM PM'.
+
+    Returns:
+        str: Time string in 24-hour format 'HH:MM'.
+    """
+    import datetime
+    try:
+        dt = datetime.datetime.strptime(time_str.strip(), "%I:%M %p")
+        return dt.strftime("%H:%M")
+    except Exception:
+        return time_str  # Return as is if parsing fails
 def jump_detected(value1: float, value2: float, jump_percentage: float) -> bool:
     """
     Detect if value2 differs from value1 by more than jump_percentage (can be negative).

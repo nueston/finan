@@ -17,9 +17,36 @@ class Interval:
 
 
 class FinanceData:
+
+    def isJumpDetected(self, date_str: str, hour_str: str, percent: float, time_half: bool = False) -> bool:
+        """
+        Return True if the high value is at least `percent` percent higher than the open value for a given date and hour.
+
+        Args:
+            date_str (str): Date in 'YYYY-MM-DD' format.
+            hour_str (str): Hour in 'HH:MM' format (24h).
+            percent (float): Percentage threshold (e.g., 5 for 5%).
+            time_half (bool): If True, round down to nearest half hour.
+
+        Returns:
+            bool: True if high is at least `percent` percent higher than open, False otherwise or if data not found.
+        """
+        ohlc = self.get_hour_value(date_str, hour_str, time_half=time_half)
+        if ohlc is None or ohlc.m_open == 0:
+            return False
+        diff_percent = ((ohlc.m_high - ohlc.m_open) / ohlc.m_open) * 100
+        return diff_percent >= percent
     """
     Fetches and processes stock data for a given ticker and interval.
     """
+
+    def __init__(self, ticker: str, interval: Interval, time_zone: str = 'Europe/Berlin'):
+        self.ticker = ticker
+        self.interval = interval
+        self.time_zone = time_zone
+        self.data = None
+        self._fetch()
+        self._convert_timezone()
 
     @staticmethod
     def to_lower_interval(time_str: str, time_half: bool = False) -> str:
@@ -70,7 +97,7 @@ class FinanceData:
 
         row = df[mask]
         if row.empty:
-            print("row empty !!")
+            print(f"row empty : {date_str} {hour_interval} ")
             return None
         o = float(row['Open'].max())
         h = float(row['High'].max())
@@ -78,23 +105,17 @@ class FinanceData:
         c = float(row['Close'].max())
         return Ohlc(m_open=o, m_high=h, m_low=l, m_close=c)
 
-    def __init__(self, ticker: str, interval: Interval, time_zone: str = 'Europe/Berlin'):
-        self.ticker = ticker
-        self.interval = interval
-        self.time_zone = time_zone
-        self.data = None
-
-    def convert_timezone(self):
+    def _convert_timezone(self):
         """
-        Convert the DataFrame index to the specified time zone.
+        Convert the DataFrame index to the specified time zone (internal use).
         """
         if self.data is not None and not self.data.empty:
             self.data.index = self.data.index.tz_convert(self.time_zone)
         return self.data
 
-    def fetch(self):
+    def _fetch(self):
         """
-        Fetch stock data using yfinance Ticker object.
+        Fetch stock data using yfinance Ticker object (internal use).
         """
         ticker_obj = yf.Ticker(self.ticker)
         self.data = ticker_obj.history(

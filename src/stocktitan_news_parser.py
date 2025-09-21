@@ -8,6 +8,7 @@ from defs.class_news import NewsEntry
 
 
 class StockNewsParser:
+
     def __init__(self, url: str, date: str):
         """
         Initialize the parser by fetching HTML content for a specific date from the given base URL.
@@ -32,12 +33,13 @@ class StockNewsParser:
         for entry in self.soup.find_all('div', class_=re.compile(r'news-row')):
             date = self._extract_date(entry)
             time = self._extract_time(entry)
-            company = self._extract_company(entry)
+            ticker = self._extract_ticker(entry)
             sentiment = self._extract_sentiment(entry)
             impact = self._extract_impact(entry)
-            if date and time and company:
-                entries.append(NewsEntry(date, time, company, sentiment, impact))
+            if date and time and ticker:
+                entries.append(NewsEntry(date, time, ticker, sentiment, impact))
         return entries
+
 
     def _extract_date(self, entry) -> str:
         # Example: <span name="date">02.08.2025</span>
@@ -52,7 +54,7 @@ class StockNewsParser:
         time_tag = entry.find('span', class_=re.compile(r'news-row-date'))
         return time_tag.text.strip() if time_tag else ''
 
-    def _extract_company(self, entry) -> str:
+    def _extract_ticker(self, entry) -> str:
         # Find ticker symbol in news-list-tickers
         tickers_div = entry.find('div', attrs={'name': 'tickers'})
         if tickers_div:
